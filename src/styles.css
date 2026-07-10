@@ -1,38 +1,45 @@
 /* =========================================================================
-   Design tokens
-   Semantic variables drive the whole UI so theming stays consistent.
-   Light is the default; dark is applied via system preference or the
-   manual [data-theme] override set on <html>.
+   Design tokens — Jarrang brand system
+   Palette drawn from jarrang.com: deep indigo "ink" (#080043), mint/teal
+   brand accent (#59DBCA) and soft lavender surfaces. Ink drives text and
+   emphasis; mint drives calls-to-action and identity. Light is default;
+   dark leans into the signature Jarrang navy.
    ========================================================================= */
 :root {
   color-scheme: light;
 
   /* Surfaces & text */
-  --bg: #f6f7fb;
-  --bg-grid: #eef0f7;
+  --bg: #eff2fa;
+  --bg-grid: #e2e7f4;
   --surface: #ffffff;
-  --surface-2: #f2f4f9;
-  --surface-3: #e9ecf4;
-  --border: rgba(15, 23, 42, 0.09);
-  --border-strong: rgba(15, 23, 42, 0.16);
-  --text: #0e1424;
-  --text-muted: #5b6577;
-  --text-faint: #8a93a6;
+  --surface-2: #f4f6fc;
+  --surface-3: #e8ecf7;
+  --border: rgba(8, 0, 67, 0.1);
+  --border-strong: rgba(8, 0, 67, 0.18);
+  --text: #080043;
+  --text-muted: #52506e;
+  --text-faint: #8a88a3;
 
-  /* Brand accent */
-  --accent: #5b5bf6;
-  --accent-strong: #4a43e8;
-  --accent-soft: rgba(91, 91, 246, 0.12);
+  /* Emphasis accent — ink navy for icons, labels, focus, values */
+  --accent: #080043;
+  --accent-strong: #1a1060;
+  --accent-soft: rgba(8, 0, 67, 0.08);
   --accent-contrast: #ffffff;
+
+  /* Brand mint — CTAs, identity and playful highlights */
+  --brand: #59dbca;
+  --brand-strong: #3fcbb8;
+  --brand-soft: rgba(89, 219, 202, 0.22);
+  --brand-contrast: #080043;
 
   /* Feedback */
   --ok: #17936a;
   --danger: #d1425a;
 
   /* Elevation — soft and low, not the heavy 2021 drop shadows */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 6px 24px -12px rgba(15, 23, 42, 0.25);
-  --shadow-lg: 0 24px 60px -28px rgba(15, 23, 42, 0.35);
+  --shadow-sm: 0 1px 2px rgba(8, 0, 67, 0.06);
+  --shadow-md: 0 6px 24px -12px rgba(8, 0, 67, 0.22);
+  --shadow-lg: 0 24px 60px -28px rgba(8, 0, 67, 0.32);
 
   /* Geometry */
   --radius-sm: 10px;
@@ -44,26 +51,32 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --dur: 0.2s;
 
-  --font: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
+  --font: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0a0c12;
-  --bg-grid: #0f121b;
-  --surface: #14171f;
-  --surface-2: #191d28;
-  --surface-3: #222736;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --text: #eaedf5;
-  --text-muted: #a4adbe;
-  --text-faint: #737d90;
-  --accent: #7c7cff;
-  --accent-strong: #6b6bff;
-  --accent-soft: rgba(124, 124, 255, 0.16);
+  --bg: #06002f;
+  --bg-grid: #0c0742;
+  --surface: #110b4a;
+  --surface-2: #171154;
+  --surface-3: #241d69;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text: #eef0fb;
+  --text-muted: #b6b8d6;
+  --text-faint: #8886a8;
+  --accent: #59dbca;
+  --accent-strong: #6fe6d6;
+  --accent-soft: rgba(89, 219, 202, 0.16);
+  --accent-contrast: #080043;
+  --brand: #59dbca;
+  --brand-strong: #6fe6d6;
+  --brand-soft: rgba(89, 219, 202, 0.18);
+  --brand-contrast: #080043;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 6px 24px -12px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 30px 70px -30px rgba(0, 0, 0, 0.75);
@@ -73,19 +86,24 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #0a0c12;
-    --bg-grid: #0f121b;
-    --surface: #14171f;
-    --surface-2: #191d28;
-    --surface-3: #222736;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.16);
-    --text: #eaedf5;
-    --text-muted: #a4adbe;
-    --text-faint: #737d90;
-    --accent: #7c7cff;
-    --accent-strong: #6b6bff;
-    --accent-soft: rgba(124, 124, 255, 0.16);
+    --bg: #06002f;
+    --bg-grid: #0c0742;
+    --surface: #110b4a;
+    --surface-2: #171154;
+    --surface-3: #241d69;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --text: #eef0fb;
+    --text-muted: #b6b8d6;
+    --text-faint: #8886a8;
+    --accent: #59dbca;
+    --accent-strong: #6fe6d6;
+    --accent-soft: rgba(89, 219, 202, 0.16);
+    --accent-contrast: #080043;
+    --brand: #59dbca;
+    --brand-strong: #6fe6d6;
+    --brand-soft: rgba(89, 219, 202, 0.18);
+    --brand-contrast: #080043;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 6px 24px -12px rgba(0, 0, 0, 0.6);
     --shadow-lg: 0 30px 70px -30px rgba(0, 0, 0, 0.75);
@@ -157,10 +175,7 @@ a {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  font-size: 1.05rem;
+  gap: 12px;
 }
 
 .brand-mark {
@@ -169,9 +184,40 @@ a {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--brand);
+  color: var(--brand-contrast);
   box-shadow: var(--shadow-sm);
+}
+
+/* Serif wordmark echoing the Jarrang logotype */
+.wordmark {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+}
+
+.brand-tool {
+  position: relative;
+  padding-left: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.brand-tool::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 18px;
+  background: var(--border-strong);
 }
 
 .topbar-actions {
@@ -584,10 +630,10 @@ input[type="range"]::-moz-range-thumb {
   justify-content: center;
   gap: 8px;
   border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: var(--accent);
-  color: var(--accent-contrast);
-  padding: 14px 20px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--brand-contrast);
+  padding: 14px 24px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -598,7 +644,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--accent-strong);
+  background: var(--brand-strong);
   transform: translateY(-1px);
 }
 
@@ -627,13 +673,13 @@ input[type="range"]::-moz-range-thumb {
   background: var(--surface-3);
 }
 
-/* Spinner shown while encoding */
+/* Spinner shown while encoding — adapts to the button's text colour */
 .spinner {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
   animation: spin 0.7s linear infinite;
 }
 
@@ -828,9 +874,9 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .btn--sm {
-  padding: 8px 12px;
+  padding: 8px 16px;
   font-size: 0.85rem;
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   box-shadow: none;
 }
 

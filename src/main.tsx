@@ -618,10 +618,8 @@ function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark">
-            <Film size={20} />
-          </span>
-          <span>GIF Studio</span>
+          <span className="wordmark">Jarrang</span>
+          <span className="brand-tool">GIF Generator</span>
         </div>
         <div className="topbar-actions">
           <span className="badge">
