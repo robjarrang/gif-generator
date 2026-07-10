@@ -13,6 +13,38 @@ type VideoMeta = { duration: number; width: number; height: number };
 
 const DEFAULTS = { fps: 10, outputWidth: 800, loop: 0, quality: 80 };
 
+const LOG_PREFIX = '[gif-generator]';
+
+function logInfo(message: string, details?: unknown) {
+  if (details !== undefined) {
+    console.log(`${LOG_PREFIX} ${message}`, details);
+  } else {
+    console.log(`${LOG_PREFIX} ${message}`);
+  }
+}
+
+function logError(stage: string, error: unknown, context?: Record<string, unknown>) {
+  console.groupCollapsed(`${LOG_PREFIX} Error during: ${stage}`);
+  console.error(error);
+  if (error instanceof Error && error.stack) {
+    console.error(error.stack);
+  }
+  if (context) {
+    console.error('Context:', context);
+  }
+  console.groupEnd();
+}
+
+function describeError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -41,12 +73,37 @@ function gifBlobPart(data: string | Uint8Array): BlobPart {
 
 async function loadFfmpeg(onLog: (message: string) => void) {
   const ffmpeg = new FFmpeg();
-  ffmpeg.on('log', ({ message }) => onLog(message));
-  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
-  await ffmpeg.load({
-    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+  ffmpeg.on('log', ({ message }) => {
+    console.log(`${LOG_PREFIX} [ffmpeg]`, message);
+    onLog(message);
   });
+  ffmpeg.on('progress', ({ progress, time }) => {
+    console.log(`${LOG_PREFIX} [ffmpeg progress]`, { progress, time });
+  });
+
+  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+
+  let coreURL: string;
+  let wasmURL: string;
+  try {
+    logInfo('Fetching ffmpeg core JS', `${baseURL}/ffmpeg-core.js`);
+    coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+    logInfo('Fetching ffmpeg core wasm', `${baseURL}/ffmpeg-core.wasm`);
+    wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+  } catch (error) {
+    logError('fetching ffmpeg core assets', error, { baseURL });
+    throw new Error(`Failed to download ffmpeg core assets from ${baseURL}: ${describeError(error)}`);
+  }
+
+  try {
+    logInfo('Loading ffmpeg core into worker…');
+    await ffmpeg.load({ coreURL, wasmURL });
+    logInfo('ffmpeg core loaded successfully.');
+  } catch (error) {
+    logError('ffmpeg.load()', error, { baseURL });
+    throw new Error(`Failed to initialize ffmpeg.wasm: ${describeError(error)}`);
+  }
+
   return ffmpeg;
 }
 
@@ -138,6 +195,22 @@ function App() {
     if (!file || !meta || !videoRef.current) return;
     setBusy(true);
     setGifUrl('');
+    console.groupCollapsed(`${LOG_PREFIX} Starting conversion`);
+    logInfo('Parameters', {
+      file: { name: file.name, size: file.size, type: file.type },
+      meta,
+      start,
+      end,
+      crop,
+      fps,
+      outputWidth,
+      loop,
+      quality,
+      encoder,
+    });
+    console.groupEnd();
+
+    let stage = 'setup';
     try {
       const safeStart = clamp(start, 0, meta.duration);
       const safeEnd = clamp(end, safeStart + 0.1, meta.duration);
@@ -146,30 +219,56 @@ function App() {
       const safeLoop = Math.max(0, Math.round(loop));
 
       if (encoder === 'ffmpeg') {
+        stage = 'loading ffmpeg.wasm';
         setStatus('Loading ffmpeg.wasm…');
         const ffmpeg = await loadFfmpeg((message) => setStatus(message));
+
+        stage = 'writing input file to ffmpeg FS';
+        logInfo(stage);
         await ffmpeg.writeFile('input.mp4', await fetchFile(file));
+
         const colors = Math.round(clamp(quality, 1, 100) * 2.55);
         const filter = `crop=${crop.width}:${crop.height}:${crop.x}:${crop.y},fps=${safeFps},scale=${safeWidth}:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=${colors}[p];[s1][p]paletteuse=dither=bayer`;
+        const args = ['-ss', String(safeStart), '-t', String(safeEnd - safeStart), '-i', 'input.mp4', '-vf', filter, '-loop', String(safeLoop), 'output.gif'];
+
+        stage = 'running ffmpeg.exec()';
+        logInfo(stage, { args });
         setStatus('Encoding with ffmpeg…');
-        await ffmpeg.exec(['-ss', String(safeStart), '-t', String(safeEnd - safeStart), '-i', 'input.mp4', '-vf', filter, '-loop', String(safeLoop), 'output.gif']);
+        const exitCode = await ffmpeg.exec(args);
+        logInfo('ffmpeg.exec() finished', { exitCode });
+        if (exitCode !== 0) {
+          throw new Error(`ffmpeg exited with non-zero code ${exitCode}. Check console logs above for [ffmpeg] output.`);
+        }
+
+        stage = 'reading output.gif from ffmpeg FS';
         const data = await ffmpeg.readFile('output.gif');
+        logInfo(stage, { bytes: data.length });
+
         const blob = new Blob([gifBlobPart(data)], { type: 'image/gif' });
         setGifUrl(URL.createObjectURL(blob));
         setGifSize(blob.size);
         setStatus('GIF ready.');
+        logInfo('Conversion complete', { size: blob.size });
       } else {
+        stage = 'extracting frames from video';
         setStatus('Extracting frames for Gifski…');
         const { frames, width, height } = await framesFromVideo(videoRef.current, crop, safeStart, safeEnd, safeFps, safeWidth);
+        logInfo(stage, { frameCount: frames.length, width, height });
+
+        stage = 'encoding with gifski';
         setStatus(`Encoding ${frames.length} frames with Gifski…`);
         const data = await encodeGifski({ frames, width, height, fps: safeFps, quality: clamp(quality, 1, 100), repeat: safeLoop });
+        logInfo('gifski encoding finished', { bytes: data.length });
+
         const blob = new Blob([gifBlobPart(data)], { type: 'image/gif' });
         setGifUrl(URL.createObjectURL(blob));
         setGifSize(blob.size);
         setStatus('GIF ready.');
+        logInfo('Conversion complete', { size: blob.size });
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Conversion failed.');
+      logError(stage, error, { encoder, crop, start, end, fps, outputWidth, quality, loop });
+      setStatus(`Conversion failed at "${stage}": ${describeError(error)} (see browser console for details)`);
     } finally {
       setBusy(false);
     }
