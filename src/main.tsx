@@ -32,6 +32,13 @@ function useObjectUrl(file: File | null) {
   return useMemo(() => (file ? URL.createObjectURL(file) : ''), [file]);
 }
 
+function gifBlobPart(data: string | Uint8Array): BlobPart {
+  if (typeof data === 'string') return data;
+  const buffer = new ArrayBuffer(data.byteLength);
+  new Uint8Array(buffer).set(data);
+  return buffer;
+}
+
 async function loadFfmpeg(onLog: (message: string) => void) {
   const ffmpeg = new FFmpeg();
   ffmpeg.on('log', ({ message }) => onLog(message));
@@ -147,7 +154,7 @@ function App() {
         setStatus('Encoding with ffmpeg…');
         await ffmpeg.exec(['-ss', String(safeStart), '-t', String(safeEnd - safeStart), '-i', 'input.mp4', '-vf', filter, '-loop', String(safeLoop), 'output.gif']);
         const data = await ffmpeg.readFile('output.gif');
-        const blob = new Blob([data], { type: 'image/gif' });
+        const blob = new Blob([gifBlobPart(data)], { type: 'image/gif' });
         setGifUrl(URL.createObjectURL(blob));
         setGifSize(blob.size);
         setStatus('GIF ready.');
@@ -156,7 +163,7 @@ function App() {
         const { frames, width, height } = await framesFromVideo(videoRef.current, crop, safeStart, safeEnd, safeFps, safeWidth);
         setStatus(`Encoding ${frames.length} frames with Gifski…`);
         const data = await encodeGifski({ frames, width, height, fps: safeFps, quality: clamp(quality, 1, 100), repeat: safeLoop });
-        const blob = new Blob([data], { type: 'image/gif' });
+        const blob = new Blob([gifBlobPart(data)], { type: 'image/gif' });
         setGifUrl(URL.createObjectURL(blob));
         setGifSize(blob.size);
         setStatus('GIF ready.');
