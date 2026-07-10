@@ -81,7 +81,11 @@ async function loadFfmpeg(onLog: (message: string) => void) {
     console.log(`${LOG_PREFIX} [ffmpeg progress]`, { progress, time });
   });
 
-  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+  // Vite bundles the ffmpeg worker as an ES module (see `worker: { format: 'es' }` in
+  // vite.config.ts), so `importScripts()` is unavailable inside it and ffmpeg.wasm falls
+  // back to a dynamic `import()` of the core script. That only works with the ESM build
+  // of ffmpeg-core (which has a `default` export) — the UMD build fails silently there.
+  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm';
 
   let coreURL: string;
   let wasmURL: string;
