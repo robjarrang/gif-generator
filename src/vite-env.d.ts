@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 declare module 'gifski-wasm' {
   export type GifskiEncodeOptions = {
     frames: Array<Uint8ClampedArray | Uint8Array | ImageData>;
